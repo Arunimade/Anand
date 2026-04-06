@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anand — Smart Kitchen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════
+   DESIGN SYSTEM
+═══════════════════════════════════════════════════════ */
+:root {
+  --saffron:     #E8621A;
+  --saffron-lt:  #F28B4A;
+  --saffron-dk:  #B8450E;
+  --cream:       #FAF6EF;
+  --cream-dk:    #F0E8DA;
+  --charcoal:    #1C1A17;
+  --charcoal-lt: #2E2B26;
+  --stone:       #8A7F72;
+  --stone-lt:    #B5ADA3;
+  --gold:        #D4A843;
+  --green-ok:    #4A9F6E;
+  --red-err:     #C0392B;
+  --blue-info:   #2E6EA6;
+
+  --ff-display: 'Cormorant Garamond', Georgia, serif;
+  --ff-body:    'DM Sans', sans-serif;
+  --ff-mono:    'Space Mono', monospace;
+
+  --r-sm: 8px;
+  --r-md: 16px;
+  --r-lg: 28px;
+  --r-xl: 48px;
+
+  --shadow-sm: 0 2px 8px rgba(28,26,23,.10);
+  --shadow-md: 0 6px 24px rgba(28,26,23,.14);
+  --shadow-lg: 0 16px 56px rgba(28,26,23,.18);
+
+  --trans: .28s cubic-bezier(.4,0,.2,1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--ff-body);
+  background: var(--charcoal);
+  color: var(--cream);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Grain overlay ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 9999; opacity: .4;
+}
+
+/* ═══════════════════════════════════════════════════════
+   TOP NAV
+═══════════════════════════════════════════════════════ */
+nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 36px;
+  background: rgba(28,26,23,.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(232,98,26,.18);
+  position: sticky; top: 0; z-index: 100;
+}
+
+.nav-brand {
+  font-family: var(--ff-display);
+  font-size: 28px; font-weight: 500;
+  color: var(--cream);
+  letter-spacing: .03em;
+}
+
+.nav-brand span { color: var(--saffron); }
+
+.nav-status {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--ff-mono); font-size: 11px;
+  color: var(--stone-lt); text-transform: uppercase; letter-spacing: .12em;
+}
+
+.status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green-ok);
+  box-shadow: 0 0 0 3px rgba(74,159,110,.25);
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(74,159,110,.25); }
+  50%       { box-shadow: 0 0 0 6px rgba(74,159,110,.10); }
+}
+
+.nav-time {
+  font-family: var(--ff-mono); font-size: 13px;
+  color: var(--stone-lt);
+}
+
+/* ═══════════════════════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════════════════════ */
+.app-shell {
+  display: grid;
+  grid-template-columns: 300px 1fr 320px;
+  grid-template-rows: auto 1fr;
+  min-height: calc(100vh - 65px);
+  gap: 0;
+}
+
+/* ═══════════════════════════════════════════════════════
+   LEFT SIDEBAR — MODE SELECTOR
+═══════════════════════════════════════════════════════ */
+.sidebar-left {
+  background: var(--charcoal-lt);
+  border-right: 1px solid rgba(255,255,255,.06);
+  padding: 28px 20px;
+  display: flex; flex-direction: column; gap: 24px;
+  overflow-y: auto;
+}
+
+.sidebar-section-title {
+  font-family: var(--ff-mono); font-size: 10px;
+  text-transform: uppercase; letter-spacing: .18em;
+  color: var(--stone); margin-bottom: 4px;
+}
+
+/* Mode cards */
+.mode-group { display: flex; flex-direction: column; gap: 10px; }
+
+.mode-card {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  border: 1.5px solid rgba(255,255,255,.07);
+  cursor: pointer;
+  transition: all var(--trans);
+  position: relative; overflow: hidden;
+  background: rgba(255,255,255,.02);
+}
+
+.mode-card::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; border-radius: 0 2px 2px 0;
+  background: var(--saffron);
+  transform: scaleY(0);
+  transition: transform var(--trans);
+}
+
+.mode-card:hover { border-color: rgba(232,98,26,.35); background: rgba(232,98,26,.06); }
+.mode-card:hover::before { transform: scaleY(1); }
+
+.mode-card.active {
+  border-color: rgba(232,98,26,.6);
+  background: rgba(232,98,26,.12);
+}
+
+.mode-card.active::before { transform: scaleY(1); }
+
+.mode-icon {
+  width: 40px; height: 40px;
+  border-radius: var(--r-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  background: rgba(255,255,255,.05);
+  flex-shrink: 0;
+  transition: background var(--trans);
+}
+
+.mode-card.active .mode-icon { background: rgba(232,98,26,.2); }
+
+.mode-info { flex: 1; }
+.mode-name {
+  font-size: 13.5px; font-weight: 500;
+  color: var(--cream); margin-bottom: 2px;
+}
+.mode-desc { font-size: 11px; color: var(--stone-lt); line-height: 1.4; }
+
+/* Appliance status */
+.appliance-status {
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: var(--r-md);
+  padding: 16px;
+}
+
+.status-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  font-size: 12px;
+}
+
+.status-row:last-child { border-bottom: none; }
+.status-label { color: var(--stone-lt); }
+.status-val { font-family: var(--ff-mono); font-size: 11px; color: var(--saffron-lt); }
+.status-val.ok { color: var(--green-ok); }
+.status-val.warn { color: var(--gold); }
+
+/* Progress bar */
+.progress-bar-wrap {
+  background: rgba(255,255,255,.07);
+  border-radius: 99px; height: 5px; overflow: hidden;
+  margin-top: 6px;
+}
+
+.progress-bar-fill {
+  height: 100%; border-radius: 99px;
+  background: linear-gradient(90deg, var(--saffron), var(--gold));
+  transition: width 1s ease;
+}
+
+/* ═══════════════════════════════════════════════════════
+   MAIN — RECIPE SELECTION
+═══════════════════════════════════════════════════════ */
+.main-area {
+  padding: 28px 32px;
+  overflow-y: auto;
+  display: flex; flex-direction: column; gap: 24px;
+}
+
+/* Hero strip */
+.hero-strip {
+  background: linear-gradient(135deg, rgba(232,98,26,.15) 0%, rgba(212,168,67,.08) 100%);
+  border: 1px solid rgba(232,98,26,.2);
+  border-radius: var(--r-lg);
+  padding: 24px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 20px;
+  position: relative; overflow: hidden;
+}
+
+.hero-strip::after {
+  content: '';
+  position: absolute; right: -60px; top: -60px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(232,98,26,.12) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.hero-text h2 {
+  font-family: var(--ff-display);
+  font-size: 32px; font-weight: 400;
+  color: var(--cream); letter-spacing: .01em;
+  line-height: 1.2;
+}
+
+.hero-text p { font-size: 13px; color: var(--stone-lt); margin-top: 6px; }
+
+.hero-cta {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--saffron);
+  color: white; padding: 12px 22px;
+  border-radius: var(--r-xl); border: none;
+  font-family: var(--ff-body); font-size: 13.5px; font-weight: 500;
+  cursor: pointer; white-space: nowrap;
+  transition: all var(--trans); flex-shrink: 0;
+}
+
+.hero-cta:hover {
+  background: var(--saffron-lt);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(232,98,26,.35);
+}
+
+/* Search */
+.search-bar {
+  display: flex; align-items: center; gap: 12px;
+  background: rgba(255,255,255,.05);
+  border: 1.5px solid rgba(255,255,255,.09);
+  border-radius: var(--r-xl);
+  padding: 10px 18px;
+  transition: border-color var(--trans);
+}
+
+.search-bar:focus-within { border-color: rgba(232,98,26,.5); }
+
+.search-bar svg { color: var(--stone); flex-shrink: 0; }
+
+.search-bar input {
+  flex: 1; background: none; border: none; outline: none;
+  font-family: var(--ff-body); font-size: 14px;
+  color: var(--cream);
+}
+
+.search-bar input::placeholder { color: var(--stone); }
+
+/* Category pills */
+.category-scroll {
+  display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
+}
+
+.category-scroll::-webkit-scrollbar { height: 0; }
+
+.cat-pill {
+  padding: 6px 16px;
+  border-radius: var(--r-xl);
+  border: 1.5px solid rgba(255,255,255,.10);
+  font-size: 12.5px; color: var(--stone-lt);
+  cursor: pointer; white-space: nowrap;
+  transition: all var(--trans);
+  background: rgba(255,255,255,.03);
+}
+
+.cat-pill:hover { border-color: rgba(232,98,26,.4); color: var(--cream); }
+.cat-pill.active {
+  background: rgba(232,98,26,.18);
+  border-color: var(--saffron);
+  color: var(--saffron-lt);
+}
+
+/* Recipe grid */
+.section-header {
+  display: flex; align-items: baseline; justify-content: space-between;
+}
+
+.section-title {
+  font-family: var(--ff-display);
+  font-size: 22px; font-weight: 400;
+  color: var(--cream); letter-spacing: .01em;
+}
+
+.section-count {
+  font-family: var(--ff-mono); font-size: 11px;
+  color: var(--stone); text-transform: uppercase; letter-spacing: .1em;
+}
+
+.recipe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.recipe-card {
+  background: rgba(255,255,255,.04);
+  border: 1.5px solid rgba(255,255,255,.07);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all var(--trans);
+  position: relative;
+}
+
+.recipe-card:hover {
+  border-color: rgba(232,98,26,.4);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.recipe-card.selected {
+  border-color: var(--saffron);
+  box-shadow: 0 0 0 3px rgba(232,98,26,.2), var(--shadow-md);
+}
+
+.recipe-thumb {
+  height: 130px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 52px;
+  position: relative; overflow: hidden;
+}
+
+.recipe-thumb::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, transparent 40%, rgba(28,26,23,.6) 100%);
+}
+
+.recipe-badge {
+  position: absolute; top: 10px; right: 10px;
+  font-family: var(--ff-mono); font-size: 9px;
+  padding: 3px 8px; border-radius: var(--r-xl);
+  text-transform: uppercase; letter-spacing: .08em; z-index: 1;
+}
+
+.recipe-badge.spicy { background: rgba(192,57,43,.8); color: #fff; }
+.recipe-badge.quick { background: rgba(74,159,110,.8); color: #fff; }
+.recipe-badge.veg   { background: rgba(74,159,110,.9); color: #fff; }
+
+.recipe-info { padding: 12px 14px 14px; }
+
+.recipe-name {
+  font-size: 13.5px; font-weight: 500;
+  color: var(--cream); margin-bottom: 5px; line-height: 1.3;
+}
+
+.recipe-meta {
+  display: flex; gap: 12px;
+  font-family: var(--ff-mono); font-size: 10px;
+  color: var(--stone-lt);
+}
+
+.recipe-select-btn {
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px;
+  margin: 0 14px 14px;
+  padding: 8px;
+  background: rgba(232,98,26,.12);
+  border: 1px solid rgba(232,98,26,.3);
+  border-radius: var(--r-sm);
+  font-family: var(--ff-body); font-size: 12px;
+  color: var(--saffron-lt); cursor: pointer;
+  transition: all var(--trans);
+}
+
+.recipe-select-btn:hover { background: rgba(232,98,26,.22); }
+.recipe-card.selected .recipe-select-btn {
+  background: var(--saffron); color: white; border-color: var(--saffron);
+}
+
+/* ═══════════════════════════════════════════════════════
+   RIGHT SIDEBAR — SMART PANEL
+═══════════════════════════════════════════════════════ */
+.sidebar-right {
+  background: var(--charcoal-lt);
+  border-left: 1px solid rgba(255,255,255,.06);
+  padding: 28px 20px;
+  display: flex; flex-direction: column; gap: 20px;
+  overflow-y: auto;
+}
+
+/* Ingredient checker */
+.ingredient-panel {
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px;
+  background: rgba(255,255,255,.03);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+
+.panel-title {
+  font-family: var(--ff-mono); font-size: 10px;
+  text-transform: uppercase; letter-spacing: .15em;
+  color: var(--stone-lt);
+}
+
+.panel-icon { font-size: 16px; }
+
+.ingredient-list { padding: 10px 0; }
+
+.ingredient-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  font-size: 12.5px;
+  transition: background var(--trans);
+}
+
+.ingredient-row:last-child { border-bottom: none; }
+.ingredient-row:hover { background: rgba(255,255,255,.03); }
+
+.ing-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+
+.ing-dot.available  { background: var(--green-ok); }
+.ing-dot.missing    { background: var(--red-err); }
+.ing-dot.checking   {
+  background: var(--gold);
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; } 50% { opacity: .3; }
+}
+
+.ing-name { flex: 1; color: var(--cream); }
+.ing-qty  { font-family: var(--ff-mono); font-size: 10px; color: var(--stone-lt); }
+.ing-status {
+  font-family: var(--ff-mono); font-size: 9px;
+  padding: 2px 7px; border-radius: var(--r-xl);
+}
+
+.ing-status.ok      { background: rgba(74,159,110,.18); color: var(--green-ok); }
+.ing-status.order   { background: rgba(192,57,43,.18); color: #E57373; }
+.ing-status.loading { background: rgba(212,168,67,.18); color: var(--gold); }
+
+/* Auto-order panel */
+.order-panel {
+  background: rgba(192,57,43,.08);
+  border: 1.5px solid rgba(192,57,43,.25);
+  border-radius: var(--r-md);
+  padding: 16px;
+  display: none;
+  animation: slide-in .3s ease;
+}
+
+.order-panel.visible { display: block; }
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.order-title {
+  font-family: var(--ff-mono); font-size: 10px;
+  text-transform: uppercase; letter-spacing: .14em;
+  color: #E57373; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.order-items { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+
+.order-item {
+  display: flex; justify-content: space-between;
+  font-size: 12px; color: var(--cream);
+  padding: 5px 10px;
+  background: rgba(255,255,255,.04);
+  border-radius: var(--r-sm);
+}
+
+.order-item span { color: var(--stone-lt); font-size: 11px; }
+
+.order-total {
+  display: flex; justify-content: space-between;
+  font-size: 13px; font-weight: 500;
+  color: var(--cream);
+  padding: 8px 10px 0;
+  border-top: 1px solid rgba(255,255,255,.07);
+  margin-bottom: 10px;
+}
+
+.order-btn {
+  width: 100%; padding: 10px;
+  background: linear-gradient(135deg, var(--saffron), var(--saffron-dk));
+  color: white; border: none; border-radius: var(--r-sm);
+  font-family: var(--ff-body); font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all var(--trans);
+}
+
+.order-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(232,98,26,.4);
+}
+
+/* Cooking pipeline */
+.pipeline {
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--r-md);
+  padding: 16px;
+  display: none;
+}
+
+.pipeline.visible { display: block; }
+
+.pipeline-step {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 8px 0;
+  position: relative;
+}
+
+.pipeline-step:not(:last-child)::after {
+  content: '';
+  position: absolute; left: 13px; top: 28px;
+  width: 2px; bottom: -8px;
+  background: rgba(255,255,255,.06);
+}
+
+.step-circle {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--ff-mono); font-size: 10px;
+  font-weight: 700; flex-shrink: 0;
+  transition: all var(--trans);
+}
+
+.step-circle.done    { background: var(--green-ok); color: white; }
+.step-circle.active  {
+  background: var(--saffron); color: white;
+  box-shadow: 0 0 0 4px rgba(232,98,26,.2);
+  animation: pulse-step 1.5s infinite;
+}
+.step-circle.pending { background: rgba(255,255,255,.08); color: var(--stone); }
+
+@keyframes pulse-step {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(232,98,26,.2); }
+  50%       { box-shadow: 0 0 0 8px rgba(232,98,26,.08); }
+}
+
+.step-text { padding-top: 4px; }
+.step-name { font-size: 12.5px; color: var(--cream); font-weight: 500; }
+.step-sub  { font-size: 11px; color: var(--stone-lt); margin-top: 2px; }
+
+/* Start cooking button */
+.start-btn {
+  width: 100%; padding: 14px;
+  background: linear-gradient(135deg, #4A9F6E, #2E7A52);
+  color: white; border: none; border-radius: var(--r-md);
+  font-family: var(--ff-body); font-size: 14px; font-weight: 500;
+  cursor: pointer; display: none;
+  align-items: center; justify-content: center; gap: 10px;
+  transition: all var(--trans);
+}
+
+.start-btn.visible { display: flex; }
+.start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(74,159,110,.4);
+}
+
+/* Notification toast */
+.toast {
+  position: fixed; bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--charcoal-lt);
+  border: 1px solid rgba(232,98,26,.35);
+  border-radius: var(--r-xl);
+  padding: 12px 22px;
+  font-size: 13px; color: var(--cream);
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: var(--shadow-lg);
+  opacity: 0; pointer-events: none;
+  transition: all .4s cubic-bezier(.4,0,.2,1);
+  z-index: 200;
+  max-width: 90vw;
+}
+
+.toast.show {
+  opacity: 1; pointer-events: all;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast-icon { font-size: 16px; }
+
+/* ── Delivery tracker ── */
+.delivery-track {
+  background: rgba(46,110,166,.08);
+  border: 1.5px solid rgba(46,110,166,.25);
+  border-radius: var(--r-md); padding: 14px; display: none;
+}
+
+.delivery-track.visible { display: block; }
+
+.delivery-title {
+  font-family: var(--ff-mono); font-size: 10px;
+  text-transform: uppercase; letter-spacing: .14em;
+  color: #64B5F6; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.delivery-steps {
+  display: flex; align-items: center; gap: 4px;
+  margin-bottom: 10px;
+}
+
+.d-step {
+  flex: 1; text-align: center; font-size: 10px;
+  color: var(--stone); transition: color var(--trans);
+}
+
+.d-step.done { color: var(--green-ok); }
+.d-step.active { color: #64B5F6; font-weight: 600; }
+
+.d-line {
+  flex: 1; height: 2px;
+  background: rgba(255,255,255,.08); border-radius: 2px;
+  position: relative; overflow: hidden;
+}
+
+.d-line-fill {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  background: var(--green-ok); border-radius: 2px;
+  transition: width 1.5s ease;
+}
+
+.delivery-eta {
+  font-size: 12px; color: var(--stone-lt); text-align: center;
+}
+
+.delivery-eta strong { color: var(--cream); }
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════ */
+@media (max-width: 1100px) {
+  .app-shell {
+    grid-template-columns: 260px 1fr;
+    grid-template-rows: auto auto auto;
+  }
+  .sidebar-right {
+    grid-column: 1 / -1;
+    border-left: none;
+    border-top: 1px solid rgba(255,255,255,.06);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 20px 24px;
+  }
+}
+
+@media (max-width: 700px) {
+  nav { padding: 14px 18px; }
+  .nav-brand { font-size: 22px; }
+  .app-shell { grid-template-columns: 1fr; }
+  .sidebar-left { border-right: none; border-bottom: 1px solid rgba(255,255,255,.06); }
+  .sidebar-right { grid-template-columns: 1fr; }
+  .main-area { padding: 20px 16px; }
+  .recipe-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   COOKING LIVE VIEW — modal overlay
+═══════════════════════════════════════════════════════ */
+.live-overlay {
+  position: fixed; inset: 0;
+  background: rgba(28,26,23,.95);
+  backdrop-filter: blur(8px);
+  z-index: 500; display: none;
+  align-items: center; justify-content: center;
+  flex-direction: column; gap: 28px;
+}
+
+.live-overlay.visible { display: flex; }
+
+.live-card {
+  background: var(--charcoal-lt);
+  border: 1.5px solid rgba(232,98,26,.25);
+  border-radius: var(--r-lg);
+  padding: 36px 40px;
+  text-align: center;
+  max-width: 480px; width: 90%;
+  position: relative; overflow: hidden;
+}
+
+.live-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--saffron), var(--gold), var(--saffron));
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite linear;
+}
+
+@keyframes shimmer {
+  from { background-position: 100% 0; }
+  to   { background-position: -100% 0; }
+}
+
+.live-emoji { font-size: 64px; margin-bottom: 12px; animation: float 3s ease-in-out infinite; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+.live-title {
+  font-family: var(--ff-display);
+  font-size: 28px; font-weight: 400;
+  color: var(--cream); margin-bottom: 6px;
+}
+
+.live-subtitle { font-size: 13px; color: var(--stone-lt); margin-bottom: 22px; }
+
+.live-progress {
+  background: rgba(255,255,255,.07);
+  border-radius: 99px; height: 8px;
+  overflow: hidden; margin-bottom: 10px;
+}
+
+.live-progress-fill {
+  height: 100%; border-radius: 99px;
+  background: linear-gradient(90deg, var(--saffron), var(--gold));
+  transition: width 1s ease;
+}
+
+.live-pct {
+  font-family: var(--ff-mono); font-size: 12px;
+  color: var(--saffron-lt); margin-bottom: 20px;
+  text-align: right;
+}
+
+.live-steps {
+  display: flex; flex-direction: column; gap: 6px;
+  margin-bottom: 24px; text-align: left;
+}
+
+.live-step-row {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 12.5px; padding: 6px 10px;
+  border-radius: var(--r-sm);
+  transition: all var(--trans);
+}
+
+.live-step-row.done { color: var(--green-ok); }
+.live-step-row.active { color: var(--cream); background: rgba(232,98,26,.1); }
+.live-step-row.pending { color: var(--stone); }
+
+.ls-icon { width: 18px; text-align: center; }
+
+.close-live {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  color: var(--stone-lt); padding: 9px 24px;
+  border-radius: var(--r-xl); cursor: pointer;
+  font-family: var(--ff-body); font-size: 13px;
+  transition: all var(--trans);
+}
+
+.close-live:hover { background: rgba(255,255,255,.1); color: var(--cream); }
+
+/* timer ring */
+.timer-ring { position: relative; width: 80px; height: 80px; margin: 0 auto 16px; }
+.timer-ring svg { transform: rotate(-90deg); }
+.timer-ring-bg { fill: none; stroke: rgba(255,255,255,.08); stroke-width: 5; }
+.timer-ring-fill { fill: none; stroke: var(--saffron); stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+.timer-text {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--ff-mono); font-size: 15px;
+  color: var(--cream); font-weight: 700;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ TOP NAV ═══ -->
+<nav>
+  <div class="nav-brand">An<span>and</span></div>
+  <div style="display:flex;align-items:center;gap:20px">
+    <div class="nav-status">
+      <div class="status-dot"></div>
+      <span>Appliance Online</span>
+    </div>
+    <div class="nav-time" id="navTime">--:--</div>
+  </div>
+</nav>
+
+<!-- ═══ APP SHELL ═══ -->
+<div class="app-shell">
+
+  <!-- ══ LEFT SIDEBAR — Mode Selector ══ -->
+  <aside class="sidebar-left">
+    <div>
+      <div class="sidebar-section-title">Operating Mode</div>
+      <div class="mode-group">
+        <div class="mode-card active" data-mode="allround" onclick="setMode(this,'allround')">
+          <div class="mode-icon">&#9881;</div>
+          <div class="mode-info">
+            <div class="mode-name">All-Round</div>
+            <div class="mode-desc">Cook + Serve + Self-Clean</div>
+          </div>
+        </div>
+        <div class="mode-card" data-mode="cook" onclick="setMode(this,'cook')">
+          <div class="mode-icon">&#127859;</div>
+          <div class="mode-info">
+            <div class="mode-name">Cook Only</div>
+            <div class="mode-desc">AI cooking, skip serving &amp; clean</div>
+          </div>
+        </div>
+        <div class="mode-card" data-mode="clean" onclick="setMode(this,'clean')">
+          <div class="mode-icon">&#128166;</div>
+          <div class="mode-info">
+            <div class="mode-name">Clean Only</div>
+            <div class="mode-desc">Steam clean all surfaces &amp; arms</div>
+          </div>
+        </div>
+        <div class="mode-card" data-mode="serve" onclick="setMode(this,'serve')">
+          <div class="mode-icon">&#127869;</div>
+          <div class="mode-info">
+            <div class="mode-name">Serve Only</div>
+            <div class="mode-desc">Robotic arms plate &amp; serve food</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sidebar-section-title">Appliance Status</div>
+      <div class="appliance-status">
+        <div class="status-row">
+          <span class="status-label">Temperature</span>
+          <span class="status-val" id="tempVal">Standby</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Robotic Arms</span>
+          <span class="status-val ok">Ready</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Water Tank</span>
+          <span class="status-val ok">Full</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Steam Nozzles</span>
+          <span class="status-val ok">Clean</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">AI Model</span>
+          <span class="status-val ok">v3.2 Active</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Connectivity</span>
+          <span class="status-val ok">Wi-Fi Strong</span>
+        </div>
+        <div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--stone-lt);margin-bottom:5px">
+            <span>Ingredient Tank</span>
+            <span id="tankPct">78%</span>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" id="tankBar" style="width:78%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sidebar-section-title">Quick Stats</div>
+      <div class="appliance-status">
+        <div class="status-row">
+          <span class="status-label">Meals Cooked Today</span>
+          <span class="status-val warn" id="mealCount">0</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Time Saved Today</span>
+          <span class="status-val" id="timeSaved">0 min</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Last Cleaned</span>
+          <span class="status-val ok">Just now</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Auto-Orders Placed</span>
+          <span class="status-val" id="orderCount">0</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══ MAIN AREA ══ -->
+  <main class="main-area">
+    <!-- Hero -->
+    <div class="hero-strip">
+      <div class="hero-text">
+        <h2>What would you like<br>to eat today?</h2>
+        <p>Select a recipe &mdash; Anand handles everything else.</p>
+      </div>
+      <button class="hero-cta" onclick="showSurprise()">
+        &#10024; Surprise Me
+      </button>
+    </div>
+
+    <!-- Search -->
+    <div class="search-bar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="searchInput" placeholder="Search 500+ Indian &amp; fusion recipes..." oninput="filterRecipes()">
+    </div>
+
+    <!-- Category pills -->
+    <div class="category-scroll" id="categoryScroll">
+      <div class="cat-pill active" onclick="filterByCategory(this,'all')">All Recipes</div>
+      <div class="cat-pill" onclick="filterByCategory(this,'dal')">Dal &amp; Lentils</div>
+      <div class="cat-pill" onclick="filterByCategory(this,'rice')">Rice &amp; Biryani</div>
+      <div class="cat-pill" onclick="filterByCategory(this,'curry')">Curries</div>
+      <div class="cat-pill" onclick="filterByCategory(this,'bread')">Breads</div>
+      <div class="cat-pill" onclick="filterByCategory(this,'snack')">Snacks</div>
+      <div class="cat-pill" onclick="filterByCategory(this,'sweet')">Sweets</div>
+      <div class="cat-pill" onclick="filterByCategory(this,'fusion')">Fusion</div>
+      <div class="cat-pill" onclick="filterByCategory(this,'quick')">Quick &lt;20min</div>
+    </div>
+
+    <!-- Recipe grid -->
+    <div>
+      <div class="section-header">
+        <div class="section-title">Popular Recipes</div>
+        <div class="section-count" id="recipeCount">12 dishes</div>
+      </div>
+    </div>
+    <div class="recipe-grid" id="recipeGrid"></div>
+  </main>
+
+  <!-- ══ RIGHT SIDEBAR — Smart Panel ══ -->
+  <aside class="sidebar-right">
+
+    <!-- Ingredient Checker -->
+    <div>
+      <div class="sidebar-section-title">Ingredient Check</div>
+      <div class="ingredient-panel" id="ingredientPanel">
+        <div class="panel-header">
+          <span class="panel-title" id="panelTitle">Select a recipe</span>
+          <span class="panel-icon">&#128269;</span>
+        </div>
+        <div class="ingredient-list" id="ingredientList">
+          <div style="padding:20px;text-align:center;font-size:12px;color:var(--stone)">
+            Choose a recipe to check ingredients
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auto-Order Panel -->
+    <div class="order-panel" id="orderPanel">
+      <div class="order-title">
+        <span>&#128722;</span> Items to Auto-Order
+      </div>
+      <div class="order-items" id="orderItems"></div>
+      <div class="order-total">
+        <span>Estimated Total</span>
+        <span id="orderTotal">&#8377;0</span>
+      </div>
+      <button class="order-btn" onclick="placeOrder()">
+        Place Order Automatically
+      </button>
+    </div>
+
+    <!-- Delivery Tracker -->
+    <div class="delivery-track" id="deliveryTrack">
+      <div class="delivery-title">
+        <span>&#128230;</span> Order Tracking
+      </div>
+      <div class="delivery-steps">
+        <div class="d-step active" id="d1">Ordered</div>
+        <div class="d-line"><div class="d-line-fill" id="dl1" style="width:0%"></div></div>
+        <div class="d-step" id="d2">Packed</div>
+        <div class="d-line"><div class="d-line-fill" id="dl2" style="width:0%"></div></div>
+        <div class="d-step" id="d3">Out for<br>Delivery</div>
+        <div class="d-line"><div class="d-line-fill" id="dl3" style="width:0%"></div></div>
+        <div class="d-step" id="d4">Arrived</div>
+      </div>
+      <div class="delivery-eta" id="deliveryETA">Estimated arrival: <strong>--</strong></div>
+    </div>
+
+    <!-- Cooking Pipeline -->
+    <div>
+      <div class="sidebar-section-title">Cooking Pipeline</div>
+      <div class="pipeline" id="pipeline">
+        <div class="pipeline-step">
+          <div class="step-circle pending" id="ps1">1</div>
+          <div class="step-text">
+            <div class="step-name">Ingredient Prep</div>
+            <div class="step-sub">Dispensing &amp; measuring</div>
+          </div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-circle pending" id="ps2">2</div>
+          <div class="step-text">
+            <div class="step-name">Chop &amp; Blend</div>
+            <div class="step-sub">Automated chopping</div>
+          </div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-circle pending" id="ps3">3</div>
+          <div class="step-text">
+            <div class="step-name">Saute &amp; Spices</div>
+            <div class="step-sub">Precise heat control</div>
+          </div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-circle pending" id="ps4">4</div>
+          <div class="step-text">
+            <div class="step-name">Main Cook</div>
+            <div class="step-sub">Multi-stage AI cooking</div>
+          </div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-circle pending" id="ps5">5</div>
+          <div class="step-text">
+            <div class="step-name">Serve</div>
+            <div class="step-sub">Robotic arms plating</div>
+          </div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-circle pending" id="ps6">6</div>
+          <div class="step-text">
+            <div class="step-name">Self-Clean</div>
+            <div class="step-sub">Steam cycle complete</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Start Cooking -->
+    <button class="start-btn" id="startBtn" onclick="startCooking()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Start Cooking Now
+    </button>
+
+  </aside>
+</div>
+
+<!-- ═══ COOKING LIVE OVERLAY ═══ -->
+<div class="live-overlay" id="liveOverlay">
+  <div class="live-card">
+    <div id="liveEmoji" class="live-emoji">&#127859;</div>
+    <div class="live-title" id="liveTitle">Preparing your meal…</div>
+    <div class="live-subtitle" id="liveSub">Anand is handling everything</div>
+
+    <div class="timer-ring">
+      <svg viewBox="0 0 80 80" width="80" height="80">
+        <circle class="timer-ring-bg" cx="40" cy="40" r="34"/>
+        <circle class="timer-ring-fill" id="timerCircle" cx="40" cy="40" r="34"
+          stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
+      </svg>
+      <div class="timer-text" id="timerText">0%</div>
+    </div>
+
+    <div class="live-progress">
+      <div class="live-progress-fill" id="liveProgressFill" style="width:0%"></div>
+    </div>
+    <div class="live-pct" id="livePct">0% complete</div>
+
+    <div class="live-steps" id="liveSteps"></div>
+
+    <button class="close-live" onclick="closeLive()">Minimise &rarr; Running in background</button>
+  </div>
+</div>
+
+<!-- ═══ TOAST ═══ -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon">&#9989;</span>
+  <span id="toastMsg">Message</span>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════════════════ -->
+<script>
+/* ── Data ──────────────────────────────────────────────── */
+const RECIPES = [
+  { id:1,  name:"Dal Tadka",           emoji:"&#127807;", time:"25 min", serves:4, badge:"veg",   cat:"dal",    ingredients:[{n:"Toor Dal",q:"200g",have:true},{n:"Onion",q:"1 large",have:true},{n:"Tomato",q:"2 pcs",have:true},{n:"Ghee",q:"2 tbsp",have:false},{n:"Cumin Seeds",q:"1 tsp",have:true}] },
+  { id:2,  name:"Chicken Biryani",     emoji:"&#127859;", time:"55 min", serves:6, badge:"spicy", cat:"rice",   ingredients:[{n:"Basmati Rice",q:"2 cups",have:true},{n:"Chicken",q:"500g",have:false},{n:"Onion",q:"3 large",have:true},{n:"Biryani Masala",q:"3 tbsp",have:true},{n:"Saffron",q:"pinch",have:false}] },
+  { id:3,  name:"Paneer Butter Masala",emoji:"&#127830;", time:"30 min", serves:4, badge:"veg",   cat:"curry",  ingredients:[{n:"Paneer",q:"250g",have:true},{n:"Tomato Puree",q:"1 cup",have:true},{n:"Cream",q:"100ml",have:false},{n:"Butter",q:"3 tbsp",have:true},{n:"Cashews",q:"20g",have:true}] },
+  { id:4,  name:"Aloo Paratha",        emoji:"&#127836;", time:"20 min", serves:3, badge:"quick", cat:"bread",  ingredients:[{n:"Wheat Flour",q:"2 cups",have:true},{n:"Potato",q:"3 pcs",have:true},{n:"Butter",q:"2 tbsp",have:true},{n:"Coriander",q:"handful",have:false},{n:"Chilli Powder",q:"1 tsp",have:true}] },
+  { id:5,  name:"Masala Chai",         emoji:"&#9749;",   time:"8 min",  serves:2, badge:"quick", cat:"snack",  ingredients:[{n:"Tea Leaves",q:"2 tsp",have:true},{n:"Milk",q:"200ml",have:true},{n:"Ginger",q:"1 inch",have:true},{n:"Cardamom",q:"3 pods",have:true},{n:"Sugar",q:"2 tsp",have:true}] },
+  { id:6,  name:"Gulab Jamun",         emoji:"&#127812;", time:"40 min", serves:8, badge:"veg",   cat:"sweet",  ingredients:[{n:"Khoya",q:"200g",have:false},{n:"Maida",q:"50g",have:true},{n:"Sugar",q:"300g",have:true},{n:"Rose Water",q:"1 tsp",have:false},{n:"Cardamom",q:"4 pods",have:true}] },
+  { id:7,  name:"Samosa",              emoji:"&#129361;", time:"45 min", serves:6, badge:"veg",   cat:"snack",  ingredients:[{n:"Maida",q:"2 cups",have:true},{n:"Potato",q:"4 pcs",have:true},{n:"Peas",q:"100g",have:true},{n:"Oil",q:"for frying",have:true},{n:"Cumin",q:"1 tsp",have:true}] },
+  { id:8,  name:"Pasta Arrabbiata",    emoji:"&#127837;", time:"25 min", serves:3, badge:"quick", cat:"fusion", ingredients:[{n:"Pasta",q:"250g",have:false},{n:"Tomatoes",q:"4 pcs",have:true},{n:"Garlic",q:"5 cloves",have:true},{n:"Chilli Flakes",q:"2 tsp",have:true},{n:"Olive Oil",q:"3 tbsp",have:false}] },
+  { id:9,  name:"Rajma Chawal",        emoji:"&#127858;", time:"50 min", serves:5, badge:"veg",   cat:"dal",    ingredients:[{n:"Kidney Beans",q:"250g",have:true},{n:"Rice",q:"2 cups",have:true},{n:"Onion",q:"2 large",have:true},{n:"Rajma Masala",q:"2 tbsp",have:false},{n:"Tomato",q:"3 pcs",have:true}] },
+  { id:10, name:"Palak Paneer",        emoji:"&#129382;", time:"35 min", serves:4, badge:"veg",   cat:"curry",  ingredients:[{n:"Spinach",q:"500g",have:false},{n:"Paneer",q:"200g",have:true},{n:"Onion",q:"2 pcs",have:true},{n:"Cream",q:"50ml",have:false},{n:"Garlic",q:"4 cloves",have:true}] },
+  { id:11, name:"Kheer",               emoji:"&#127868;", time:"40 min", serves:6, badge:"veg",   cat:"sweet",  ingredients:[{n:"Full Cream Milk",q:"1 litre",have:true},{n:"Rice",q:"50g",have:true},{n:"Sugar",q:"100g",have:true},{n:"Cardamom",q:"4 pods",have:true},{n:"Almonds",q:"20g",have:true}] },
+  { id:12, name:"Chole Bhature",       emoji:"&#129348;", time:"60 min", serves:4, badge:"spicy", cat:"bread",  ingredients:[{n:"Chickpeas",q:"300g",have:true},{n:"Maida",q:"2 cups",have:true},{n:"Chole Masala",q:"3 tbsp",have:false},{n:"Onion",q:"3 pcs",have:true},{n:"Ginger-Garlic",q:"2 tbsp",have:true}] },
+];
+
+let selectedRecipe = null;
+let currentMode    = 'allround';
+let cookingTimer   = null;
+let cookProgress   = 0;
+let mealCount      = 0;
+let timeSaved      = 0;
+let orderCount     = 0;
+let activeCategory = 'all';
+let searchQuery    = '';
+
+/* ── Clock ──────────────────────────────────────────────── */
+function updateClock() {
+  const now = new Date();
+  document.getElementById('navTime').textContent =
+    now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* ── Render Recipes ────────────────────────────────────── */
+function renderRecipes() {
+  const grid = document.getElementById('recipeGrid');
+  const filtered = RECIPES.filter(r => {
+    const matchCat  = activeCategory === 'all' || r.cat === activeCategory ||
+                      (activeCategory === 'quick' && parseInt(r.time) < 20);
+    const matchSrch = r.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchCat && matchSrch;
+  });
+
+  document.getElementById('recipeCount').textContent = `${filtered.length} dish${filtered.length !== 1 ? 'es' : ''}`;
+
+  grid.innerHTML = filtered.map(r => `
+    <div class="recipe-card ${selectedRecipe && selectedRecipe.id===r.id ? 'selected':''}"
+         id="card-${r.id}" onclick="selectRecipe(${r.id})">
+      <div class="recipe-thumb" style="background:${thumbBg(r.emoji)}">
+        ${r.badge ? `<div class="recipe-badge ${r.badge}">${r.badge}</div>` : ''}
+        <span style="position:relative;z-index:1">${r.emoji}</span>
+      </div>
+      <div class="recipe-info">
+        <div class="recipe-name">${r.name}</div>
+        <div class="recipe-meta">
+          <span>&#8987; ${r.time}</span>
+          <span>&#128101; ${r.serves}</span>
+        </div>
+      </div>
+      <div class="recipe-select-btn">
+        ${selectedRecipe && selectedRecipe.id===r.id
+          ? '&#10003; Selected'
+          : '+ Select'}
+      </div>
+    </div>`).join('');
+}
+
+function thumbBg(e) {
+  const colors = {
+    '&#127807;':'rgba(74,159,110,.12)','&#127859;':'rgba(232,98,26,.12)',
+    '&#127830;':'rgba(212,168,67,.12)','&#127836;':'rgba(184,69,14,.12)',
+    '&#9749;'  :'rgba(150,100,50,.12)','&#127812;':'rgba(200,60,60,.12)',
+    '&#129361;':'rgba(232,98,26,.12)', '&#127837;':'rgba(60,100,200,.12)',
+    '&#127858;':'rgba(120,50,50,.12)', '&#129382;':'rgba(40,140,80,.12)',
+    '&#127868;':'rgba(200,180,100,.12)','&#129348;':'rgba(50,80,180,.12)',
+  };
+  return colors[e] || 'rgba(100,100,100,.1)';
+}
+
+/* ── Select Recipe ─────────────────────────────────────── */
+function selectRecipe(id) {
+  selectedRecipe = RECIPES.find(r => r.id === id);
+  renderRecipes();
+  showIngredients(selectedRecipe);
+  showToast(`"${selectedRecipe.name}" selected — checking ingredients…`, '&#128269;');
+}
+
+/* ── Show Ingredients ──────────────────────────────────── */
+function showIngredients(recipe) {
+  document.getElementById('panelTitle').textContent = recipe.name;
+
+  // Simulate checking animation
+  const list = document.getElementById('ingredientList');
+  list.innerHTML = recipe.ingredients.map(i => `
+    <div class="ingredient-row">
+      <div class="ing-dot checking"></div>
+      <div class="ing-name">${i.n}</div>
+      <div class="ing-qty">${i.q}</div>
+      <div class="ing-status loading">Checking…</div>
+    </div>`).join('');
+
+  let idx = 0;
+  const interval = setInterval(() => {
+    const rows = list.querySelectorAll('.ingredient-row');
+    if (idx >= rows.length) {
+      clearInterval(interval);
+      revealMissingPanel(recipe);
+      return;
+    }
+    const ing = recipe.ingredients[idx];
+    const row = rows[idx];
+    row.querySelector('.ing-dot').className = `ing-dot ${ing.have ? 'available' : 'missing'}`;
+    row.querySelector('.ing-status').className = `ing-status ${ing.have ? 'ok' : 'order'}`;
+    row.querySelector('.ing-status').textContent = ing.have ? 'Available' : 'Order';
+    idx++;
+  }, 380);
+}
+
+/* ── Missing Items Panel ───────────────────────────────── */
+function revealMissingPanel(recipe) {
+  const missing = recipe.ingredients.filter(i => !i.have);
+  const orderPanel = document.getElementById('orderPanel');
+  const pipeline   = document.getElementById('pipeline');
+  const startBtn   = document.getElementById('startBtn');
+
+  if (missing.length > 0) {
+    const prices = {
+      'Ghee':'&#8377;85','Chicken':'&#8377;320','Cream':'&#8377;45','Saffron':'&#8377;60',
+      'Coriander':'&#8377;15','Khoya':'&#8377;110','Rose Water':'&#8377;55',
+      'Pasta':'&#8377;65','Olive Oil':'&#8377;220','Spinach':'&#8377;30',
+      'Rajma Masala':'&#8377;75','Chole Masala':'&#8377;72',
+    };
+    const total = missing.reduce((s,i) => s + parseInt((prices[i.n]||'&#8377;50').replace('&#8377;','')), 0);
+
+    document.getElementById('orderItems').innerHTML = missing.map(i => `
+      <div class="order-item">
+        <span>${i.n}</span><span>${prices[i.n] || '&#8377;50'}</span>
+      </div>`).join('');
+    document.getElementById('orderTotal').innerHTML = `&#8377;${total}`;
+    orderPanel.classList.add('visible');
+    pipeline.classList.remove('visible');
+    startBtn.classList.remove('visible');
+
+    showToast(`${missing.length} item${missing.length>1?'s':''} missing — ready to auto-order`, '&#128722;');
+  } else {
+    orderPanel.classList.remove('visible');
+    document.getElementById('deliveryTrack').classList.remove('visible');
+    pipeline.classList.add('visible');
+    startBtn.classList.add('visible');
+    showToast('All ingredients available! Ready to cook.', '&#9989;');
+  }
+}
+
+/* ── Place Order ───────────────────────────────────────── */
+function placeOrder() {
+  const orderPanel   = document.getElementById('orderPanel');
+  const deliveryTrack= document.getElementById('deliveryTrack');
+  const pipeline     = document.getElementById('pipeline');
+  const startBtn     = document.getElementById('startBtn');
+
+  orderPanel.classList.remove('visible');
+  deliveryTrack.classList.add('visible');
+
+  orderCount++;
+  document.getElementById('orderCount').textContent = orderCount;
+  showToast('Order placed! Anand will start cooking when delivery arrives.', '&#128230;');
+
+  // Simulate delivery progress
+  let step = 0;
+  const steps = [
+    { id:'d1', line:'dl1', time:0    },
+    { id:'d2', line:'dl2', time:3000 },
+    { id:'d3', line:'dl3', time:7000 },
+    { id:'d4', line:null,  time:12000},
+  ];
+
+  const etaTime = new Date(Date.now() + 13000);
+  document.getElementById('deliveryETA').innerHTML =
+    `Estimated arrival: <strong>${etaTime.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</strong>`;
+
+  steps.forEach((s, i) => {
+    setTimeout(() => {
+      if(s.line) {
+        document.getElementById(s.line).style.width='100%';
+        setTimeout(()=>{ document.getElementById(s.id).className='d-step done'; }, 1000);
+      } else {
+        document.getElementById(s.id).className='d-step done';
+        showToast('Ingredients delivered! Starting to cook now…', '&#127859;');
+        pipeline.classList.add('visible');
+        startBtn.classList.add('visible');
+      }
+      if(i < steps.length-1) {
+        document.getElementById(steps[i+1].id).className='d-step active';
+      }
+    }, s.time);
+  });
+}
+
+/* ── Mode Selection ────────────────────────────────────── */
+function setMode(el, mode) {
+  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  currentMode = mode;
+  const msgs = {
+    allround:'All-Round mode: Cook + Serve + Clean',
+    cook:'Cook Only mode activated',
+    clean:'Clean Only mode activated',
+    serve:'Serve Only mode activated',
+  };
+  showToast(msgs[mode], '&#9881;');
+}
+
+/* ── Filter ────────────────────────────────────────────── */
+function filterByCategory(el, cat) {
+  document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  activeCategory = cat;
+  renderRecipes();
+}
+
+function filterRecipes() {
+  searchQuery = document.getElementById('searchInput').value;
+  renderRecipes();
+}
+
+/* ── Surprise Me ───────────────────────────────────────── */
+function showSurprise() {
+  const r = RECIPES[Math.floor(Math.random() * RECIPES.length)];
+  selectRecipe(r.id);
+  showToast(`Surprise! How about "${r.name}"?`, '&#10024;');
+}
+
+/* ── Start Cooking ─────────────────────────────────────── */
+function startCooking() {
+  if (!selectedRecipe) { showToast('Please select a recipe first.','&#9888;'); return; }
+
+  const overlay = document.getElementById('liveOverlay');
+  overlay.classList.add('visible');
+  document.getElementById('liveEmoji').innerHTML = selectedRecipe.emoji;
+  document.getElementById('liveTitle').textContent = `Cooking ${selectedRecipe.name}`;
+
+  const modeLabels = {allround:'Cook + Serve + Clean', cook:'Cooking only', clean:'Clean only', serve:'Serving only'};
+  document.getElementById('liveSub').textContent = modeLabels[currentMode];
+
+  // Build live steps based on mode
+  let liveStepsData = [];
+  if (currentMode === 'allround' || currentMode === 'cook') {
+    liveStepsData = [
+      'Dispensing &amp; measuring ingredients',
+      'Chopping vegetables &amp; spices',
+      'Heating oil — reaching temperature',
+      'Sauteing onions &amp; aromatics',
+      'Adding spices &amp; sauces',
+      'Main cook cycle in progress',
+    ];
+  }
+  if (currentMode === 'allround' || currentMode === 'serve') {
+    liveStepsData.push('Robotic arms plating &amp; serving');
+  }
+  if (currentMode === 'allround' || currentMode === 'clean') {
+    liveStepsData.push('Steam clean cycle running');
+    liveStepsData.push('Drying &amp; reset complete');
+  }
+  if (currentMode === 'clean') {
+    liveStepsData = ['Activating steam nozzles','Hot water flush — all surfaces','Rinse cycle — robotic arms','Dry &amp; sanitise complete'];
+  }
+
+  const stepsEl = document.getElementById('liveSteps');
+  stepsEl.innerHTML = liveStepsData.map((s,i) => `
+    <div class="live-step-row pending" id="ls-${i}">
+      <span class="ls-icon">&#9679;</span> ${s}
+    </div>`).join('');
+
+  cookProgress = 0;
+  let stepIdx = 0;
+  const total = parseInt(selectedRecipe.time) * 1000 / 10; // speed up for demo
+  const stepInterval = total / liveStepsData.length;
+
+  document.getElementById('tempVal').textContent = '0°C';
+
+  cookingTimer = setInterval(() => {
+    cookProgress += 1;
+    if (cookProgress > 100) {
+      clearInterval(cookingTimer);
+      cookingComplete();
+      return;
+    }
+
+    // progress bar
+    document.getElementById('liveProgressFill').style.width = cookProgress + '%';
+    document.getElementById('livePct').textContent = cookProgress + '% complete';
+
+    // timer ring
+    const circumference = 213.6;
+    const offset = circumference - (cookProgress / 100) * circumference;
+    document.getElementById('timerCircle').style.strokeDashoffset = offset;
+    document.getElementById('timerText').textContent = cookProgress + '%';
+
+    // temperature simulation
+    const temp = Math.min(180, Math.round(cookProgress * 1.8));
+    document.getElementById('tempVal').textContent = temp + '°C';
+
+    // step progression
+    const newStep = Math.floor(cookProgress / (100 / liveStepsData.length));
+    if (newStep !== stepIdx && newStep < liveStepsData.length) {
+      if (stepIdx < liveStepsData.length) {
+        document.getElementById(`ls-${stepIdx}`)?.classList?.replace('active','done');
+        document.getElementById(`ls-${stepIdx}`).querySelector('.ls-icon').textContent = '✓';
+      }
+      stepIdx = newStep;
+      const activeEl = document.getElementById(`ls-${stepIdx}`);
+      if (activeEl) {
+        activeEl.classList.replace('pending','active');
+        // also update sidebar pipeline
+        updatePipeline(stepIdx);
+      }
+    }
+  }, 80);
+}
+
+function updatePipeline(step) {
+  const pipeSteps = document.querySelectorAll('[id^="ps"]');
+  pipeSteps.forEach((el, i) => {
+    if (i < step) el.className = 'step-circle done';
+    else if (i === step) el.className = 'step-circle active';
+    else el.className = 'step-circle pending';
+  });
+}
+
+function cookingComplete() {
+  const liveStepsData = document.getElementById('liveSteps').querySelectorAll('.live-step-row');
+  liveStepsData.forEach(el => {
+    el.className = 'live-step-row done';
+    el.querySelector('.ls-icon').textContent = '✓';
+  });
+
+  document.getElementById('liveTitle').textContent = `${selectedRecipe.name} is Ready!`;
+  document.getElementById('liveSub').textContent = 'Served and cleaned. Enjoy your meal!';
+  document.getElementById('liveEmoji').innerHTML = '&#127859;';
+  document.getElementById('tempVal').textContent = 'Standby';
+
+  mealCount++;
+  timeSaved += parseInt(selectedRecipe.time);
+  document.getElementById('mealCount').textContent = mealCount;
+  document.getElementById('timeSaved').textContent = timeSaved + ' min';
+
+  updatePipeline(99);
+  showToast(`${selectedRecipe.name} is ready! Bon appétit.`, '&#127859;');
+}
+
+function closeLive() {
+  document.getElementById('liveOverlay').classList.remove('visible');
+}
+
+/* ── Toast ─────────────────────────────────────────────── */
+let toastTimer;
+function showToast(msg, icon='&#9989;') {
+  const toast = document.getElementById('toast');
+  document.getElementById('toastMsg').innerHTML = msg;
+  document.getElementById('toastIcon').innerHTML = icon;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+}
+
+/* ── Init ──────────────────────────────────────────────── */
+renderRecipes();
+</script>
+</body>
+</html>
